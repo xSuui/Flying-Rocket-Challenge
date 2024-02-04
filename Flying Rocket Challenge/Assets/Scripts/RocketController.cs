@@ -1,4 +1,79 @@
+
+
+
+
 using UnityEngine;
+
+public class RocketController : MonoBehaviour
+{
+    public Rigidbody rocketRigidbody;
+    public GameObject segundoEstagioPrefab;
+    public Transform separationPoint;
+    public float thrustForce = 1000f;
+    public float separationHeight = 50f;
+    public Cinemachine.CinemachineVirtualCamera virtualCamera; // Adiciona uma referência à câmera Cinemachine
+
+    private bool hasSeparated = false;
+    private Vector3 lastRocketPosition; // Salva a última posição conhecida do foguete
+
+    void Start()
+    {
+        rocketRigidbody.AddForce(Vector3.up * thrustForce);
+        lastRocketPosition = transform.position; // Inicializa a última posição conhecida do foguete
+        Invoke("StopThrust", 5f);
+    }
+
+    void Update()
+    {
+        if (rocketRigidbody.velocity.y < 0 && !hasSeparated)
+        {
+            if (transform.position.y >= separationHeight)
+            {
+                Debug.Log("Separando o primeiro estágio...");
+                SeparateFirstStage();
+            }
+        }
+    }
+
+    public void SeparateFirstStage()
+    {
+        if (separationPoint != null)
+        {
+            // Instanciar o segundo estágio
+            GameObject segundoEstagio = Instantiate(segundoEstagioPrefab, separationPoint.position, separationPoint.rotation);
+
+            // Passar a última posição conhecida do foguete para o segundo estágio
+            segundoEstagio.GetComponent<SecondStageController>().SetLastRocketPosition(transform.position);
+
+            // Desativar o primeiro estágio
+            gameObject.SetActive(false);
+
+            // Trocar a câmera Cinemachine para seguir o segundo estágio
+            if (virtualCamera != null)
+            {
+                virtualCamera.Follow = segundoEstagio.transform;
+                virtualCamera.LookAt = segundoEstagio.transform;
+            }
+            else
+            {
+                Debug.LogError("Referência para a câmera Cinemachine não atribuída. Verifique se foi configurada corretamente no Inspector.");
+            }
+        }
+        else
+        {
+            Debug.LogError("separationPoint não encontrado. Verifique se foi atribuído corretamente no Inspector.");
+        }
+    }
+
+    public void StopThrust()
+    {
+        rocketRigidbody.velocity = Vector3.zero;
+        rocketRigidbody.angularVelocity = Vector3.zero;
+    }
+}
+
+
+/*using UnityEngine;
 
 public class RocketController : MonoBehaviour
 {
@@ -56,17 +131,7 @@ public class RocketController : MonoBehaviour
         rocketRigidbody.velocity = Vector3.zero;
         rocketRigidbody.angularVelocity = Vector3.zero;
     }
-}
-
-
-
-
-
-
-
-
-
-
+}*/
 
 
 
