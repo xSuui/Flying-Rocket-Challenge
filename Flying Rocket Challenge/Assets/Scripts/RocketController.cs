@@ -1,8 +1,235 @@
-
-
-
-
 using UnityEngine;
+using Cinemachine;
+
+public class RocketController : MonoBehaviour
+{
+    public Rigidbody rocketRigidbody;
+    public GameObject segundoEstagioPrefab;
+    public Transform separationPoint;
+    public float thrustForce = 1000f;
+    public float separationHeight = 50f;
+    public CinemachineVirtualCamera virtualCamera;
+
+    private bool hasSeparated = false;
+    private Vector3 lastRocketPosition;
+    private float currentThrust = 0f;
+    public float acceleration = 5f; // Ajuste a aceleração conforme necessário
+
+    void Start()
+    {
+        lastRocketPosition = transform.position;
+        Invoke("StopThrust", 5f);
+    }
+
+    void FixedUpdate()
+    {
+        // Aplica uma força de empuxo suave apenas enquanto o objeto ainda não se separou
+        if (!hasSeparated)
+        {
+            currentThrust += Time.fixedDeltaTime * acceleration;
+            float clampedThrust = Mathf.Clamp(currentThrust, 0f, thrustForce);
+            rocketRigidbody.AddForce(Vector3.up * clampedThrust);
+        }
+    }
+
+    void Update()
+    {
+        // Verifica se ultrapassou a altura de separação
+        if (!hasSeparated && transform.position.y >= separationHeight)
+        {
+            Debug.Log("Separando o primeiro estágio...");
+            SeparateFirstStage();
+        }
+    }
+
+    public void SeparateFirstStage()
+    {
+        if (separationPoint != null)
+        {
+            GameObject segundoEstagio = Instantiate(segundoEstagioPrefab, separationPoint.position, separationPoint.rotation);
+            segundoEstagio.GetComponent<SecondStageController>().SetLastRocketPosition(transform.position);
+            gameObject.SetActive(false);
+
+            if (virtualCamera != null)
+            {
+                virtualCamera.Follow = segundoEstagio.transform;
+                virtualCamera.LookAt = segundoEstagio.transform;
+            }
+            else
+            {
+                Debug.LogError("Referência para a câmera Cinemachine não atribuída. Verifique se foi configurada corretamente no Inspector.");
+            }
+
+            hasSeparated = true; // Define como verdadeiro após a separação
+        }
+        else
+        {
+            Debug.LogError("separationPoint não encontrado. Verifique se foi atribuído corretamente no Inspector.");
+        }
+    }
+
+    public void StopThrust()
+    {
+        // Desliga a força de empuxo após um tempo
+        hasSeparated = true;
+        rocketRigidbody.velocity = Vector3.zero;
+        rocketRigidbody.angularVelocity = Vector3.zero;
+    }
+}
+
+
+/*using UnityEngine;
+using Cinemachine;
+
+public class RocketController : MonoBehaviour
+{
+    public Rigidbody rocketRigidbody;
+    public GameObject segundoEstagioPrefab;
+    public Transform separationPoint;
+    public float thrustForce = 1000f;
+    public float separationHeight = 50f;
+    public CinemachineVirtualCamera virtualCamera;
+
+    private bool hasSeparated = false;
+    private Vector3 lastRocketPosition;
+    private float currentThrust = 0f;
+    public float acceleration = 5f; // Ajuste a aceleração conforme necessário
+
+    void Start()
+    {
+        lastRocketPosition = transform.position;
+        Invoke("StopThrust", 5f);
+    }
+
+    void FixedUpdate()
+    {
+        // Aplica uma força de empuxo suave
+        if (!hasSeparated && rocketRigidbody.velocity.y >= 0)
+        {
+            currentThrust += Time.fixedDeltaTime * acceleration;
+            float clampedThrust = Mathf.Clamp(currentThrust, 0f, thrustForce);
+            rocketRigidbody.AddForce(Vector3.up * clampedThrust);
+        }
+    }
+
+    void Update()
+    {
+        if (rocketRigidbody.velocity.y < 0 && !hasSeparated)
+        {
+            if (transform.position.y >= separationHeight)
+            {
+                Debug.Log("Separando o primeiro estágio...");
+                SeparateFirstStage();
+            }
+        }
+    }
+
+    public void SeparateFirstStage()
+    {
+        if (separationPoint != null)
+        {
+            GameObject segundoEstagio = Instantiate(segundoEstagioPrefab, separationPoint.position, separationPoint.rotation);
+            segundoEstagio.GetComponent<SecondStageController>().SetLastRocketPosition(transform.position);
+            gameObject.SetActive(false);
+
+            if (virtualCamera != null)
+            {
+                virtualCamera.Follow = segundoEstagio.transform;
+                virtualCamera.LookAt = segundoEstagio.transform;
+            }
+            else
+            {
+                Debug.LogError("Referência para a câmera Cinemachine não atribuída. Verifique se foi configurada corretamente no Inspector.");
+            }
+
+            hasSeparated = true;
+        }
+        else
+        {
+            Debug.LogError("separationPoint não encontrado. Verifique se foi atribuído corretamente no Inspector.");
+        }
+    }
+
+    public void StopThrust()
+    {
+        rocketRigidbody.velocity = Vector3.zero;
+        rocketRigidbody.angularVelocity = Vector3.zero;
+    }
+}*/
+
+
+
+
+/*using UnityEngine;
+using Cinemachine;
+
+public class RocketController : MonoBehaviour
+{
+    public Rigidbody rocketRigidbody;
+    public GameObject segundoEstagioPrefab;
+    public Transform separationPoint;
+    public float thrustForce = 1000f;
+    public float separationHeight = 50f;
+    public CinemachineVirtualCamera virtualCamera;
+
+    private bool hasSeparated = false;
+    private Vector3 lastRocketPosition;
+
+    void Start()
+    {
+        rocketRigidbody.AddForce(Vector3.up * thrustForce);
+        lastRocketPosition = transform.position;
+        Invoke("StopThrust", 5f);
+    }
+
+    void Update()
+    {
+        if (rocketRigidbody.velocity.y < 0 && !hasSeparated)
+        {
+            if (transform.position.y >= separationHeight)
+            {
+                Debug.Log("Separando o primeiro estágio...");
+                SeparateFirstStage();
+            }
+        }
+    }
+
+    public void SeparateFirstStage()
+    {
+        if (separationPoint != null)
+        {
+            GameObject segundoEstagio = Instantiate(segundoEstagioPrefab, separationPoint.position, separationPoint.rotation);
+            segundoEstagio.GetComponent<SecondStageController>().SetLastRocketPosition(transform.position);
+            gameObject.SetActive(false);
+
+            if (virtualCamera != null)
+            {
+                virtualCamera.Follow = segundoEstagio.transform;
+                virtualCamera.LookAt = segundoEstagio.transform;
+
+                // Congela a rotação da câmera
+                virtualCamera.transform.rotation = Quaternion.Euler(Vector3.zero);
+            }
+            else
+            {
+                Debug.LogError("Referência para a câmera Cinemachine não atribuída. Verifique se foi configurada corretamente no Inspector.");
+            }
+        }
+        else
+        {
+            Debug.LogError("separationPoint não encontrado. Verifique se foi atribuído corretamente no Inspector.");
+        }
+    }
+
+    public void StopThrust()
+    {
+        rocketRigidbody.velocity = Vector3.zero;
+        rocketRigidbody.angularVelocity = Vector3.zero;
+    }
+}*/
+
+
+/*using UnityEngine;
 
 public class RocketController : MonoBehaviour
 {
@@ -70,7 +297,7 @@ public class RocketController : MonoBehaviour
         rocketRigidbody.velocity = Vector3.zero;
         rocketRigidbody.angularVelocity = Vector3.zero;
     }
-}
+}*/
 
 
 /*using UnityEngine;
