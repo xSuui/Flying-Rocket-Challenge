@@ -9,6 +9,213 @@ public class RocketController : MonoBehaviour
     public float thrustForce = 1000f;
     public float separationHeight = 50f;
     public CinemachineVirtualCamera virtualCamera;
+    public GameObject rocketParticles; // Objeto de partículas do foguete
+
+    private bool hasSeparated = false;
+    private bool gameStarted = false; // Controla se o jogo começou ou não
+    private Vector3 lastRocketPosition;
+    private float currentThrust = 0f;
+    public float acceleration = 5f; // Ajuste a aceleração conforme necessário
+
+    void Start()
+    {
+        // Desativa o foguete no início
+        rocketRigidbody.isKinematic = true;
+        rocketRigidbody.detectCollisions = false;
+    }
+
+    void Update()
+    {
+        // Verifica se o espaço foi pressionado para iniciar o jogo
+        if (!gameStarted && Input.GetKeyDown(KeyCode.Space))
+        {
+            StartGame();
+        }
+
+        // Executa apenas se o jogo começou
+        if (gameStarted)
+        {
+            // Verifica se ultrapassou a altura de separação
+            if (!hasSeparated && transform.position.y >= separationHeight)
+            {
+                Debug.Log("Separando o primeiro estágio...");
+                SeparateFirstStage();
+            }
+        }
+    }
+
+    void FixedUpdate()
+    {
+        // Aplica uma força de empuxo suave apenas enquanto o objeto ainda não se separou
+        if (gameStarted && !hasSeparated)
+        {
+            currentThrust += Time.fixedDeltaTime * acceleration;
+            float clampedThrust = Mathf.Clamp(currentThrust, 0f, thrustForce);
+            rocketRigidbody.AddForce(Vector3.up * clampedThrust);
+
+            // Verifica se o foguete está subindo e ativa as partículas
+            if (rocketRigidbody.velocity.y > 0 && rocketParticles != null)
+            {
+                rocketParticles.SetActive(true);
+            }
+        }
+    }
+
+    void StartGame()
+    {
+        // Ativa o foguete para começar o jogo
+        rocketRigidbody.isKinematic = false;
+        rocketRigidbody.detectCollisions = true;
+        gameStarted = true;
+    }
+
+    public void SeparateFirstStage()
+    {
+        if (separationPoint != null)
+        {
+            GameObject segundoEstagio = Instantiate(segundoEstagioPrefab, separationPoint.position, separationPoint.rotation);
+            segundoEstagio.GetComponent<SecondStageController>().SetLastRocketPosition(transform.position);
+            gameObject.SetActive(false);
+
+            if (virtualCamera != null)
+            {
+                virtualCamera.Follow = segundoEstagio.transform;
+                virtualCamera.LookAt = segundoEstagio.transform;
+            }
+            else
+            {
+                Debug.LogError("Referência para a câmera Cinemachine não atribuída. Verifique se foi configurada corretamente no Inspector.");
+            }
+
+            hasSeparated = true; // Define como verdadeiro após a separação
+
+            // Desliga as partículas do foguete quando atinge a posição de separação
+            if (rocketParticles != null)
+            {
+                rocketParticles.SetActive(false);
+            }
+        }
+        else
+        {
+            Debug.LogError("separationPoint não encontrado. Verifique se foi atribuído corretamente no Inspector.");
+        }
+    }
+}
+
+
+
+
+/*using UnityEngine;
+using Cinemachine;
+
+
+public class RocketController : MonoBehaviour
+{
+    public Rigidbody rocketRigidbody;
+    public GameObject segundoEstagioPrefab;
+    public Transform separationPoint;
+    public float thrustForce = 1000f;
+    public float separationHeight = 50f;
+    public CinemachineVirtualCamera virtualCamera;
+    public GameObject rocketParticles; // Objeto de partículas do foguete
+
+    private bool hasSeparated = false;
+    private Vector3 lastRocketPosition;
+    private float currentThrust = 0f;
+    public float acceleration = 5f; // Ajuste a aceleração conforme necessário
+
+    void Start()
+    {
+        lastRocketPosition = transform.position;
+        Invoke("StopThrust", 5f);
+    }
+
+    void FixedUpdate()
+    {
+        // Aplica uma força de empuxo suave apenas enquanto o objeto ainda não se separou
+        if (!hasSeparated)
+        {
+            currentThrust += Time.fixedDeltaTime * acceleration;
+            float clampedThrust = Mathf.Clamp(currentThrust, 0f, thrustForce);
+            rocketRigidbody.AddForce(Vector3.up * clampedThrust);
+
+            // Verifica se o foguete está subindo e ativa as partículas
+            if (rocketRigidbody.velocity.y > 0 && rocketParticles != null)
+            {
+                //Debug.Log("Ativando partículas do foguete.");
+                rocketParticles.SetActive(true);
+            }
+        }
+    }
+
+
+
+    void Update()
+    {
+        // Verifica se ultrapassou a altura de separação
+        if (!hasSeparated && transform.position.y >= separationHeight)
+        {
+            Debug.Log("Separando o primeiro estágio...");
+            SeparateFirstStage();
+        }
+    }
+
+    public void SeparateFirstStage()
+    {
+        if (separationPoint != null)
+        {
+            GameObject segundoEstagio = Instantiate(segundoEstagioPrefab, separationPoint.position, separationPoint.rotation);
+            segundoEstagio.GetComponent<SecondStageController>().SetLastRocketPosition(transform.position);
+            gameObject.SetActive(false);
+
+            if (virtualCamera != null)
+            {
+                virtualCamera.Follow = segundoEstagio.transform;
+                virtualCamera.LookAt = segundoEstagio.transform;
+            }
+            else
+            {
+                Debug.LogError("Referência para a câmera Cinemachine não atribuída. Verifique se foi configurada corretamente no Inspector.");
+            }
+
+            hasSeparated = true; // Define como verdadeiro após a separação
+
+            // Desliga as partículas do foguete quando atinge a posição de separação
+            if (rocketParticles != null)
+            {
+                rocketParticles.SetActive(false);
+            }
+        }
+        else
+        {
+            Debug.LogError("separationPoint não encontrado. Verifique se foi atribuído corretamente no Inspector.");
+        }
+    }
+
+
+    public void StopThrust()
+    {
+        // Desliga a força de empuxo após um tempo
+        hasSeparated = true;
+        rocketRigidbody.velocity = Vector3.zero;
+        rocketRigidbody.angularVelocity = Vector3.zero;
+    }
+}*/
+
+
+
+
+/*using UnityEngine;
+using Cinemachine;
+
+public class RocketController : MonoBehaviour
+{
+    public Rigidbody rocketRigidbody;
+    public GameObject segundoEstagioPrefab;
+    public Transform separationPoint;
+    public float thrustForce = 1000f;
+    public float separationHeight = 50f;
+    public CinemachineVirtualCamera virtualCamera;
 
     private bool hasSeparated = false;
     private Vector3 lastRocketPosition;
@@ -75,7 +282,7 @@ public class RocketController : MonoBehaviour
         rocketRigidbody.velocity = Vector3.zero;
         rocketRigidbody.angularVelocity = Vector3.zero;
     }
-}
+}*/
 
 
 /*using UnityEngine;
