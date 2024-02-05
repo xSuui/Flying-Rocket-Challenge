@@ -190,7 +190,7 @@ Transform:
   m_GameObject: {fileID: 7352742649730874777}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 3, y: 3, z: 3}
   m_Children:
   - {fileID: 2463426961067764398}
   - {fileID: 6167580031802042823}
@@ -209,16 +209,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4e699c0765aec35488e739fa601d9d88, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  rocketCamera: {fileID: 0}
+  secondStageCamera: {fileID: 0}
   secondStageRigidbody: {fileID: 3623468957936628704}
   initialVelocity: 4
   finalVelocity: -8
-  velocityIncreaseRate: 5
+  velocityIncreaseRate: 15
+  maxVelocityIncreaseRate: 2
   dragIncreaseRate: 0.5
-  maxDrag: 1
+  maxDrag: 2
   rotationAngle: 10
   rotationSpeed: 10
-  rotationStopDelay: 5
-  freezeRotationDelay: 6.5
+  rotationStopDelay: 16
+  freezeRotationDelay: 8
 --- !u!54 &3623468957936628704
 Rigidbody:
   m_ObjectHideFlags: 0

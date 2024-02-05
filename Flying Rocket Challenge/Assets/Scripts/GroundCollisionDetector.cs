@@ -15,7 +15,7 @@ public class GroundCollisionDetector : MonoBehaviour
     {
         if (collision.gameObject.CompareTag("floor"))
         {
-            secondStageController.StopRotation();
+            //secondStageController.StopRotation();
         }
     }
 }
